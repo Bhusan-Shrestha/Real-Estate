@@ -29,14 +29,21 @@ Frontend currently contains starter/template files and is not yet wired to backe
 cd Backend
 npm install
 copy .env.example .env
+createdb real_estate
 npm run dev
+```
+
+If your database name in .env is different from realestate, create that name instead:
+
+```bash
+createdb <your_db_name>
 ```
 
 Backend default URL:
 - http://localhost:5000
 
 Notes:
-- On startup, backend automatically creates the database if it does not exist.
+- Create the PostgreSQL database manually before starting the backend.
 - Backend creates tables if they do not exist.
 - Admin user is seeded/upserted from env values.
 - Properties are not auto-seeded.
