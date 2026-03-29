@@ -4,65 +4,26 @@ import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
-let pool = null;
+ const pool = new pg.Pool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
+});
 
-async function createDatabaseIfNotExists() {
-    try {
-        // Connect to default postgres database to create our database
-        const tempPool = new pg.Pool({
-            host: process.env.DB_HOST,
-            port: process.env.DB_PORT,
-            user: process.env.DB_USER,
-            password: process.env.DB_PASSWORD,
-            database: 'postgres'
-        });
+pool.on('error', (err) => {
+    console.error('Unexpected error on idle client', err);
+    process.exit(-1);
+});
 
-        // Check if database exists
-        const result = await tempPool.query(
-            `SELECT 1 FROM pg_database WHERE datname = $1`,
-            [process.env.DB_NAME]
-        );
-
-        if (result.rows.length === 0) {
-            console.log(`Creating database: ${process.env.DB_NAME}...`);
-            await tempPool.query(`CREATE DATABASE "${process.env.DB_NAME}"`);
-            console.log(`Database ${process.env.DB_NAME} created successfully`);
-        } else {
-            console.log(`Database ${process.env.DB_NAME} already exists`);
-        }
-
-        await tempPool.end();
-    } catch (err) {
-        console.error('Error creating database:', err);
-        throw err;
-    }
-}
-
-function initializePool() {
-    if (!pool) {
-        pool = new pg.Pool({
-            host: process.env.DB_HOST,
-            port: process.env.DB_PORT,
-            user: process.env.DB_USER,
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_NAME
-        });
-
-        pool.on('error', (err) => {
-            console.error('Unexpected error on idle client', err);
-            process.exit(-1);
-        });
-    }
-    return pool;
-}
 
 async function initializeDatabase() {
     try {
-        // Create database first if it doesn't exist
-        await createDatabaseIfNotExists();
-
         // Initialize pool connection
-        const connPool = initializePool();
+        const connPool = pool;
+
+        await connPool.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto;`);
 
         // Create users table if it doesn't exist
         await connPool.query(`
@@ -105,7 +66,7 @@ async function initializeDatabase() {
                 UNIQUE(user_id, property_id)
             );
         `);
-        console.log('Database and tables initialized successfully');
+        console.log('Database tables initialized successfully');
 
     } catch (err) {
         console.error('Error initializing database:', err);
@@ -118,7 +79,7 @@ async function seedAdminUser() {
     if (process.env.ADMIN_NAME && process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
         const adminPasswordHash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
 
-        const connPool = initializePool();
+        const connPool = pool;
         await connPool.query(
             `
                 INSERT INTO users (name, email, password, role)
@@ -133,8 +94,5 @@ async function seedAdminUser() {
     }
 }
 
-function getPool() {
-    return initializePool();
-}
 
-export { getPool as pool, initializeDatabase, seedAdminUser };
+export { pool, initializeDatabase, seedAdminUser };
