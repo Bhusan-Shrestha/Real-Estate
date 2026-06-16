@@ -1,6 +1,6 @@
 import { pool } from '../config/db.js'
 
-export async function createFavourite({ user_id, property_id }) {
+export async function createFavourite(user_id, property_id) {
     const result = await pool.query(
         `INSERT INTO favourites (user_id, property_id) 
         VALUES ($1, $2)
