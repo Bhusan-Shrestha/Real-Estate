@@ -176,10 +176,13 @@ export default function DashboardPage() {
         <div className="estate-shell">
             <header className="estate-navbar">
                 <div className="estate-brand">
-                    <div>
-                        <h1>🏠 Real Estate</h1>
-
-                    </div>
+                    <span className="estate-brand-mark" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                            <path d="M9 21v-6h6v6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                        </svg>
+                    </span>
+                    <h1>Havenly</h1>
                 </div>
                 <nav className="estate-nav-links">
                     <button
@@ -207,27 +210,36 @@ export default function DashboardPage() {
                     <button
                         type="button"
                         className="profile-menu-trigger"
+                        aria-expanded={isProfileMenuOpen}
+                        aria-haspopup="menu"
                         onClick={() => setIsProfileMenuOpen((current) => !current)}
                     >
                         <div className="profile-avatar">{(user?.name || 'A').slice(0, 1).toUpperCase()}</div>
                         <div className="profile-summary">
                             <strong>
                                 {user?.name || 'Admin User'}
-                                <span className="profile-role">{user?.role || 'buyer'}</span>
                             </strong>
-                            <span>{user?.email || 'admin@example.com'}</span>
+                            <span>{user?.role || 'buyer'}</span>
                         </div>
+                        <span className="profile-chevron" aria-hidden="true">⌄</span>
                     </button>
                     {isProfileMenuOpen ? (
-                        <div className="profile-menu-dropdown">
+                        <div className="profile-menu-dropdown" role="menu">
+                            <div className="profile-menu-heading">
+                                <span className="profile-menu-label">Signed in as</span>
+                                <strong>{user?.email || 'admin@example.com'}</strong>
+                            </div>
                             <button
                                 type="button"
+                                className="logout-action"
+                                role="menuitem"
                                 onClick={() => {
                                     setIsProfileMenuOpen(false);
                                     logout();
                                 }}
                             >
-                                Logout
+                                <span aria-hidden="true">↪</span>
+                                Log out
                             </button>
                         </div>
                     ) : null}
@@ -364,8 +376,15 @@ export default function DashboardPage() {
                     ) : (
                         <>
                             <div className="dashboard-title">
-                                <h2>{activeTab === 'favorites' ? 'My Favourites' : 'Properties'}</h2>
-                                <p>Welcome back, {user?.name || 'Buyer'} (Role: {user?.role || 'buyer'})</p>
+                                <div>
+                                    <p className="dashboard-eyebrow">Your collection</p>
+                                    <h2>{activeTab === 'favorites' ? 'My Favourites' : 'Properties'}</h2>
+                                    <p>Welcome back, {user?.name || 'Buyer'}. Find a place that feels like home.</p>
+                                </div>
+                                <div className="dashboard-stat">
+                                    <strong>{shownCards.length}</strong>
+                                    <span>{activeTab === 'favorites' ? 'Saved homes' : 'Available homes'}</span>
+                                </div>
                             </div>
 
                             {activeTab !== 'add' ? (
@@ -430,7 +449,19 @@ export default function DashboardPage() {
                                     </div>
 
                                     {shownCards.length === 0 ? (
-                                        <p className="panel-subtext">No properties available yet.</p>
+                                        <div className="empty-state">
+                                            <div className="empty-state-icon" aria-hidden="true">
+                                                <svg viewBox="0 0 24 24" fill="none">
+                                                    <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V10Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                                                    <path d="M8 21v-6h8v6M8 11h.01M12 11h.01M16 11h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                                </svg>
+                                            </div>
+                                            <h3>{activeTab === 'favorites' ? 'Your shortlist is waiting.' : 'Your marketplace is ready.'}</h3>
+                                            <p>{activeTab === 'favorites' ? 'Save a home you love and it will appear here.' : isAdmin ? 'Add your first property to start building the collection.' : 'New properties will appear here when they become available.'}</p>
+                                            {isAdmin && activeTab !== 'favorites' ? (
+                                                <button type="button" onClick={() => setActiveTab('add')}>Add your first property <span aria-hidden="true">→</span></button>
+                                            ) : null}
+                                        </div>
                                     ) : null}
                                 </>
                             ) : null}
